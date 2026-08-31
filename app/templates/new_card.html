@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Add Card to {{ deck.name }}</h1>
+<form method="post">
+  <input name="front_text" placeholder="Front (term)" required><br>
+  <textarea name="back_text" placeholder="Back (definition)" required></textarea><br>
+  <label>Day number: <input name="day_number" type="number" value="{{ next_day }}" min="1" required></label><br>
+  <button type="submit">Add Card</button>
+</form>
+{% endblock %}

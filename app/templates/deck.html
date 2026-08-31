@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ deck.name }}</h1>
+
+<p>
+  Day
+  {% for d in range(1, deck.max_day + 1) %}
+    <a href="{{ url_for('main.view_deck', deck_id=deck.id, day=d) }}">{{ d }}</a>
+  {% endfor %}
+  of {{ deck.max_day }}
+</p>
+
+<a href="{{ url_for('main.new_card', deck_id=deck.id) }}">+ Add cards for next day</a>
+
+<h2>Reviewing Day {{ current_day }} (cumulative)</h2>
+
+{% for item in day_view %}
+  <div class="card-row {{ item.status }}">
+    <strong>{{ item.card.front_text }}</strong>
+    <details>
+      <summary>Show definition</summary>
+      {{ item.card.back_text }}
+    </details>
+    <form method="post" action="{{ url_for('main.review_card', card_id=item.card.id) }}" style="display:inline">
+      <input type="hidden" name="day_number" value="{{ current_day }}">
+      <button name="result" value="correct">✅ Knew it</button>
+      <button name="result" value="incorrect">❌ Forgot it</button>
+    </form>
+  </div>
+{% endfor %}
+{% endblock %}
