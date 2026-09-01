@@ -1,6 +1,7 @@
 from sqlalchemy import func
 from app import db
 from app.models import Card, Review
+import re
 
 
 def get_day_view(deck_id: int, day_number: int):
@@ -63,3 +64,38 @@ def record_review(card_id: int, day_number: int, result: bool):
     db.session.add(review)
     db.session.commit()
     return review
+
+def parse_bulk_cards(raw_text: str):
+    """
+    Parses pasted text into a list of (front, back) tuples.
+    Supports lines separated by tab, comma, or ' - ' (Quizlet/Anki export formats).
+    Skips blank lines and lines that can't be split into two parts.
+    """
+    pairs = []
+    for line in raw_text.strip().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if "\t" in line:
+            parts = line.split("\t", 1)
+        elif "," in line:
+            parts = line.split(",", 1)
+        elif " - " in line:
+            parts = line.split(" - ", 1)
+        else:
+            continue  # can't parse this line, skip it
+        if len(parts) == 2 and parts[0].strip() and parts[1].strip():
+            pairs.append((parts[0].strip(), parts[1].strip()))
+    return pairs
+
+
+def split_into_days(pairs, terms_per_day: int):
+    """
+    Chunks a list of (front, back) pairs into groups of terms_per_day,
+    returning a list of (day_number, front, back) tuples.
+    """
+    result = []
+    for i, (front, back) in enumerate(pairs):
+        day_number = (i // terms_per_day) + 1
+        result.append((day_number, front, back))
+    return result

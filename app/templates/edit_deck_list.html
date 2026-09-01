@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Edit Word List — {{ deck.name }}</h1>
+<p style="color:#b5573e;">Warning: saving this will delete all current cards and review history for this deck, then rebuild it from the list below.</p>
+<form method="post">
+  <label>Terms per day:</label><br>
+  <input name="terms_per_day" type="number" min="1" value="{{ deck.terms_per_day or 10 }}" required><br><br>
+
+  <label>Word list (term and definition separated by tab, comma, or " - "):</label><br>
+  <textarea name="word_list" rows="16" required>{{ current_text }}</textarea><br><br>
+
+  <button type="submit">Save Changes</button>
+</form>
+<p><a href="{{ url_for('main.view_deck', deck_id=deck.id) }}">Cancel</a></p>
+{% endblock %}

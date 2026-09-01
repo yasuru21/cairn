@@ -24,7 +24,8 @@ class Deck(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
+    target_days = db.Column(db.Integer, nullable=True) #added new target days
+    terms_per_day = db.Column(db.Integer, nullable=True)
     cards = db.relationship("Card", backref="deck", lazy=True, cascade="all, delete-orphan")
 
     @property

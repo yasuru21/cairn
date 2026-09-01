@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Manage Cards — {{ deck.name }}</h1>
+<p><a href="{{ url_for('main.view_deck', deck_id=deck.id) }}">Back to review</a></p>
+
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+  <tr>
+    <th>Day</th>
+    <th>Front</th>
+    <th>Back</th>
+    <th>Actions</th>
+  </tr>
+  {% for card in cards %}
+  <tr>
+    <td>{{ card.day_number }}</td>
+    <td>{{ card.front_text }}</td>
+    <td>{{ card.back_text }}</td>
+    <td>
+      <a href="{{ url_for('main.edit_card', card_id=card.id) }}">Edit</a>
+      &nbsp;|&nbsp;
+      <form method="post" action="{{ url_for('main.delete_card', card_id=card.id) }}"
+            style="display:inline"
+            onsubmit="return confirm('Delete this card and its review history?');">
+        <button type="submit">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4">No cards yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -3,6 +3,14 @@
 <h1>New Deck</h1>
 <form method="post">
   <input name="name" placeholder="Deck name" required>
-  <button type="submit">Create</button>
+
+  <label>Terms per day:</label><br>
+  <input name="terms_per_day" type="number" min="1" value="10" required><br><br>
+  
+  <label>Paste your word list (one per line, term and definition separated by a tab, comma, or " - "):</label><br>
+  <textarea name="word_list" rows="12" placeholder="abound	exist in large numbers
+amorphous	shapeless" required></textarea><br><br>
+
+  <button type="submit">Create Deck</button>
 </form>
 {% endblock %}

@@ -25,4 +25,4 @@ Visit http://localhost:5000 and sign up to save decks locally
 
 The core query lives in `app/services.py::get_day_view` — given a deck and a
 day number, it returns every card introduced on or before that day, each
-annotated with its most recent review result *for that specific day*.
+annotated with its most recent review result *for that specific day*.git

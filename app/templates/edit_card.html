@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Edit Card</h1>
+<form method="post">
+  <input name="front_text" value="{{ card.front_text }}" required><br>
+  <textarea name="back_text" required>{{ card.back_text }}</textarea><br>
+  <label>Day number: <input name="day_number" type="number" value="{{ card.day_number }}" min="1" required></label><br>
+  <button type="submit">Save Changes</button>
+</form>
+<p><a href="{{ url_for('main.manage_cards', deck_id=card.deck_id) }}">Cancel</a></p>
+{% endblock %}
