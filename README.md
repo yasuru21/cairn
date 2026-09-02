@@ -11,6 +11,7 @@ flask --app run db migrate -m "initial schema"
 flask --app run db upgrade
 python run.py
 ```
+run using venv/bin/python run.py if there are issues
 
 Visit http://localhost:5000 and sign up to save decks locally
 
