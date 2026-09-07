@@ -90,8 +90,17 @@ def view_deck(deck_id):
         (day_num, list(items))
         for day_num, items in groupby(day_view, key=lambda item: item["card"].day_number)
     ]
+    cards_json = [
+        {
+            "id": item["card"].id,
+            "front_text": item["card"].front_text,
+            "back_text": item["card"].back_text,
+            "status": item["status"],
+        }
+        for item in day_view
+    ]
     return render_template(
-        "deck.html", deck=deck, grouped=grouped, current_day=current_day
+        "deck.html", deck=deck, grouped=grouped, day_view=day_view, cards_json=cards_json, current_day=current_day
     )
 
 

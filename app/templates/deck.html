@@ -13,13 +13,17 @@
 <a href="{{ url_for('main.new_card', deck_id=deck.id) }}">+ Add cards for next day</a>
 &nbsp;|&nbsp;
 <a href="{{ url_for('main.manage_cards', deck_id=deck.id) }}">Manage all cards</a>
+&nbsp;|&nbsp;
+<a href="{{ url_for('main.edit_deck_list', deck_id=deck.id) }}">Edit word list</a>
 
 <h2>Reviewing Day {{ current_day }} (cumulative)</h2>
+
+<button id="start-review-btn">▶ Start Review Mode</button>
 
 {% for day_num, items in grouped %}
   <h3>Group {{ day_num }}</h3>
   {% for item in items %}
-    <div class="card-row {{ item.status }}">
+    <div class="card-row {{ item.status }}" data-card-index="{{ loop.index0 }}">
       <strong>{{ item.card.front_text }}</strong>
       <details>
         <summary>Show definition</summary>
@@ -27,11 +31,108 @@
       </details>
       <form method="post" action="{{ url_for('main.review_card', card_id=item.card.id) }}" style="display:inline">
         <input type="hidden" name="day_number" value="{{ current_day }}">
-        <button name="result" value="correct">Knew it</button>
-        <button name="result" value="incorrect">Forgot it</button>
+        <button name="result" value="correct">✅ Knew it</button>
+        <button name="result" value="incorrect">❌ Forgot it</button>
       </form>
     </div>
   {% endfor %}
 {% endfor %}
 
+<!-- Modal overlay -->
+<div id="review-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000;">
+  <div style="max-width:600px; margin:60px auto; background:#111; color:white; padding:24px; border-radius:8px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2 id="modal-term" style="margin:0;"></h2>
+      <button id="modal-close">✕</button>
+    </div>
+    <div style="margin:16px 0;">
+      <button id="modal-knew">✅ (G) Knew it</button>
+      <button id="modal-forgot">❌ (R) Forgot it</button>
+      <button id="modal-prev">⬆ (↑) Previous</button>
+      <button id="modal-next">⬇ (↓) Next</button>
+    </div>
+    <p id="modal-definition" style="font-size:1.1rem;"></p>
+    <textarea id="modal-notes" placeholder="Write notes here..." rows="3" style="width:100%;"></textarea>
+    <p style="font-size:0.8rem; color:#999;">Notes are saved in your browser only — not stored on the server, and may be lost if you switch browsers or clear browser data.</p>
+    <p id="modal-progress" style="font-size:0.85rem; color:#999;"></p>
+  </div>
+</div>
+
+<script>
+  const CARDS = {{ cards_json | tojson }};
+  const CURRENT_DAY = {{ current_day }};
+  let currentIndex = 0;
+
+  const modal = document.getElementById("review-modal");
+  const termEl = document.getElementById("modal-term");
+  const defEl = document.getElementById("modal-definition");
+  const notesEl = document.getElementById("modal-notes");
+  const progressEl = document.getElementById("modal-progress");
+
+  function notesKey(cardId) {
+    return "cairn_notes_" + cardId;
+  }
+
+  function showCard(index) {
+    if (index < 0 || index >= CARDS.length) return;
+    currentIndex = index;
+    const item = CARDS[currentIndex];
+    termEl.textContent = item.front_text;
+    defEl.textContent = item.back_text;
+    notesEl.value = localStorage.getItem(notesKey(item.id)) || "";
+    progressEl.textContent = `Card ${currentIndex + 1} of ${CARDS.length}`;
+  }
+
+  function openModal(index) {
+    modal.style.display = "block";
+    showCard(index);
+  }
+
+  function closeModal() {
+    modal.style.display = "none";
+  }
+
+  async function markCard(result) {
+    const item = CARDS[currentIndex];
+    const formData = new FormData();
+    formData.append("day_number", CURRENT_DAY);
+    formData.append("result", result);
+    await fetch(`/cards/${item.id}/review`, { method: "POST", body: formData });
+    item.status = result === "correct" ? "correct" : "incorrect";
+    if (currentIndex < CARDS.length - 1) {
+      showCard(currentIndex + 1);
+    } else {
+      closeModal();
+    }
+  }
+
+  document.getElementById("start-review-btn").addEventListener("click", () => openModal(0));
+  document.getElementById("modal-close").addEventListener("click", closeModal);
+  document.getElementById("modal-knew").addEventListener("click", () => markCard("correct"));
+  document.getElementById("modal-forgot").addEventListener("click", () => markCard("incorrect"));
+  document.getElementById("modal-prev").addEventListener("click", () => showCard(currentIndex - 1));
+  document.getElementById("modal-next").addEventListener("click", () => showCard(currentIndex + 1));
+
+  notesEl.addEventListener("input", () => {
+    const item = CARDS[currentIndex];
+    localStorage.setItem(notesKey(item.id), notesEl.value);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (modal.style.display !== "block") return;
+    if (e.key === "g" || e.key === "G") markCard("correct");
+    else if (e.key === "r" || e.key === "R") markCard("incorrect");
+    else if (e.key === "ArrowDown" || e.key === "ArrowRight") showCard(currentIndex + 1);
+    else if (e.key === "ArrowUp" || e.key === "ArrowLeft") showCard(currentIndex - 1);
+    else if (e.key === "Escape") closeModal();
+  });
+
+  // Clicking a term in the list opens the modal at that card
+  document.querySelectorAll(".card-row").forEach((row) => {
+    row.querySelector("strong").style.cursor = "pointer";
+    row.querySelector("strong").addEventListener("click", () => {
+      openModal(parseInt(row.dataset.cardIndex, 10));
+    });
+  });
+</script>
 {% endblock %}
