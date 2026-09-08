@@ -20,23 +20,20 @@
 
 <button id="start-review-btn">▶ Start Review Mode</button>
 
+{% set ns = namespace(idx=0) %}
+<div style="display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start;">
 {% for day_num, items in grouped %}
-  <h3>Group {{ day_num }}</h3>
-  {% for item in items %}
-    <div class="card-row {{ item.status }}" data-card-index="{{ loop.index0 }}">
-      <strong>{{ item.card.front_text }}</strong>
-      <details>
-        <summary>Show definition</summary>
-        {{ item.card.back_text }}
-      </details>
-      <form method="post" action="{{ url_for('main.review_card', card_id=item.card.id) }}" style="display:inline">
-        <input type="hidden" name="day_number" value="{{ current_day }}">
-        <button name="result" value="correct">✅ Knew it</button>
-        <button name="result" value="incorrect">❌ Forgot it</button>
-      </form>
-    </div>
-  {% endfor %}
+  <div style="min-width:160px;">
+    <h3>Group {{ day_num }}</h3>
+    {% for item in items %}
+      <div class="card-row {{ item.status }}" data-card-index="{{ ns.idx }}" style="cursor:pointer; padding:4px 8px;">
+        {{ item.card.front_text }}
+      </div>
+      {% set ns.idx = ns.idx + 1 %}
+    {% endfor %}
+  </div>
 {% endfor %}
+</div>
 
 <!-- Modal overlay -->
 <div id="review-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000;">
@@ -46,8 +43,8 @@
       <button id="modal-close">✕</button>
     </div>
     <div style="margin:16px 0;">
-      <button id="modal-knew">✅ (G) Knew it</button>
-      <button id="modal-forgot">❌ (R) Forgot it</button>
+      <button id="modal-knew">(G) Knew it</button>
+      <button id="modal-forgot">(R) Forgot it</button>
       <button id="modal-prev">⬆ (↑) Previous</button>
       <button id="modal-next">⬇ (↓) Next</button>
     </div>
@@ -127,10 +124,9 @@
     else if (e.key === "Escape") closeModal();
   });
 
-  // Clicking a term in the list opens the modal at that card
+  // Clicking a word in the list opens the modal at that card
   document.querySelectorAll(".card-row").forEach((row) => {
-    row.querySelector("strong").style.cursor = "pointer";
-    row.querySelector("strong").addEventListener("click", () => {
+    row.addEventListener("click", () => {
       openModal(parseInt(row.dataset.cardIndex, 10));
     });
   });
