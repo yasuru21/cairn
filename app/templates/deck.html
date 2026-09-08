@@ -130,5 +130,85 @@
       openModal(parseInt(row.dataset.cardIndex, 10));
     });
   });
+
+   // --- Free-roam list highlighting (2D spatial navigation) ---
+  let highlightIndex = -1;
+
+  function getRect(el) {
+    const r = el.getBoundingClientRect();
+    return { centerX: r.left + r.width / 2, centerY: r.top + r.height / 2 };
+  }
+
+  function highlightCard(index) {
+    if (index < 0 || index >= CARDS.length) return;
+    document.querySelectorAll(".card-row").forEach((el) => {
+      el.style.outline = "";
+    });
+    highlightIndex = index;
+    const row = document.querySelector(`.card-row[data-card-index="${index}"]`);
+    if (row) {
+      row.style.outline = "3px solid #2b6cb0";
+      row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }
+
+  function moveDirection(direction) {
+    const rows = Array.from(document.querySelectorAll(".card-row"));
+    if (rows.length === 0) return;
+
+    if (highlightIndex < 0) {
+      highlightCard(0);
+      return;
+    }
+
+    const current = document.querySelector(`.card-row[data-card-index="${highlightIndex}"]`);
+    if (!current) return;
+    const curr = getRect(current);
+
+    let best = null;
+    let bestScore = Infinity;
+
+    rows.forEach((row) => {
+      const idx = parseInt(row.dataset.cardIndex, 10);
+      if (idx === highlightIndex) return;
+      const r = getRect(row);
+      let inDirection = false;
+      let score = 0;
+
+      // Primary-axis distance counts fully; drift on the other axis is penalized
+      // more heavily, so navigation prefers staying aligned in a column/row.
+      if (direction === "down" && r.centerY > curr.centerY + 5) {
+        inDirection = true;
+        score = Math.abs(r.centerX - curr.centerX) * 2 + (r.centerY - curr.centerY);
+      } else if (direction === "up" && r.centerY < curr.centerY - 5) {
+        inDirection = true;
+        score = Math.abs(r.centerX - curr.centerX) * 2 + (curr.centerY - r.centerY);
+      } else if (direction === "right" && r.centerX > curr.centerX + 5) {
+        inDirection = true;
+        score = Math.abs(r.centerY - curr.centerY) * 2 + (r.centerX - curr.centerX);
+      } else if (direction === "left" && r.centerX < curr.centerX - 5) {
+        inDirection = true;
+        score = Math.abs(r.centerY - curr.centerY) * 2 + (curr.centerX - r.centerX);
+      }
+
+      if (inDirection && score < bestScore) {
+        bestScore = score;
+        best = idx;
+      }
+    });
+
+    if (best !== null) highlightCard(best);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (modal.style.display === "block") return; // modal has its own key handling
+    const tag = document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    if (e.key === "ArrowDown") { e.preventDefault(); moveDirection("down"); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); moveDirection("up"); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); moveDirection("right"); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); moveDirection("left"); }
+  });
 </script>
 {% endblock %}
