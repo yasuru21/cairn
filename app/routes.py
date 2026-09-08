@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request
 from flask_login import login_required, current_user
 from app import db
-from app.models import Deck, Card
+from app.models import Deck, Card, Review
 from app.services import get_day_view, record_review, parse_bulk_cards, split_into_days
 from itertools import groupby
 
@@ -130,6 +130,14 @@ def review_card(card_id):
     record_review(card_id, day_number, result)
     deck_id = Card.query.get_or_404(card_id).deck_id
     return redirect(url_for("main.view_deck", deck_id=deck_id, day=day_number))
+
+@main_bp.route("/cards/<int:card_id>/unreview", methods=["POST"])
+@login_required
+def unreview_card(card_id):
+    day_number = int(request.form["day_number"])
+    Review.query.filter_by(card_id=card_id, day_number=day_number).delete()
+    db.session.commit()
+    return ("", 204)
 
 @main_bp.route("/decks/<int:deck_id>/delete", methods=["POST"]) #delete deck
 @login_required

@@ -200,6 +200,38 @@
     if (best !== null) highlightCard(best);
   }
 
+  async function markHighlighted(result) {
+    if (highlightIndex < 0) return;
+    const item = CARDS[highlightIndex];
+    const formData = new FormData();
+    formData.append("day_number", CURRENT_DAY);
+    formData.append("result", result);
+    await fetch(`/cards/${item.id}/review`, { method: "POST", body: formData });
+    item.status = result === "correct" ? "correct" : "incorrect";
+
+    const row = document.querySelector(`.card-row[data-card-index="${highlightIndex}"]`);
+    if (row) {
+      row.classList.remove("correct", "incorrect", "unreviewed");
+      row.classList.add(item.status);
+    }
+  }
+
+  async function resetHighlighted() {
+    if (highlightIndex < 0) return;
+    const item = CARDS[highlightIndex];
+    const formData = new FormData();
+    formData.append("day_number", CURRENT_DAY);
+    await fetch(`/cards/${item.id}/unreview`, { method: "POST", body: formData });
+    item.status = "unreviewed";
+
+    const row = document.querySelector(`.card-row[data-card-index="${highlightIndex}"]`);
+    if (row) {
+      row.classList.remove("correct", "incorrect", "unreviewed");
+      row.classList.add("unreviewed");
+    }
+  }
+  
+
   document.addEventListener("keydown", (e) => {
     if (modal.style.display === "block") return; // modal has its own key handling
     const tag = document.activeElement.tagName;
@@ -209,6 +241,9 @@
     else if (e.key === "ArrowUp") { e.preventDefault(); moveDirection("up"); }
     else if (e.key === "ArrowRight") { e.preventDefault(); moveDirection("right"); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); moveDirection("left"); }
+    else if (e.key === "g" || e.key === "G") { e.preventDefault(); markHighlighted("correct"); }
+    else if (e.key === "r" || e.key === "R") { e.preventDefault(); markHighlighted("incorrect"); }
+    else if (e.key === "w" || e.key === "W") { e.preventDefault(); resetHighlighted(); }
   });
 </script>
 {% endblock %}
